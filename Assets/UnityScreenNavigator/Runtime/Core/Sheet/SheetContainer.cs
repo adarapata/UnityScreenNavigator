@@ -8,14 +8,19 @@ using UnityScreenNavigator.Runtime.Core.Shared;
 using UnityScreenNavigator.Runtime.Foundation;
 using UnityScreenNavigator.Runtime.Foundation.AssetLoader;
 using UnityScreenNavigator.Runtime.Foundation.Coroutine;
+#if UNITY_6000_4_OR_NEWER
+using TransformId = UnityEngine.EntityId;
+#else
+using TransformId = System.Int32;
+#endif
 
 namespace UnityScreenNavigator.Runtime.Core.Sheet
 {
     [RequireComponent(typeof(RectMask2D))]
     public sealed class SheetContainer : MonoBehaviour, IScreenContainer
     {
-        private static readonly Dictionary<int, SheetContainer> InstanceCacheByTransform =
-            new Dictionary<int, SheetContainer>();
+        private static readonly Dictionary<TransformId, SheetContainer> InstanceCacheByTransform =
+            new Dictionary<TransformId, SheetContainer>();
 
         private static readonly Dictionary<string, SheetContainer> InstanceCacheByName =
             new Dictionary<string, SheetContainer>();
@@ -94,7 +99,7 @@ namespace UnityScreenNavigator.Runtime.Core.Sheet
             UnregisterAll();
 
             InstanceCacheByName.Remove(_name);
-            var keysToRemove = new List<int>();
+            var keysToRemove = new List<TransformId>();
             foreach (var cache in InstanceCacheByTransform)
                 if (Equals(cache.Value))
                     keysToRemove.Add(cache.Key);
@@ -123,7 +128,11 @@ namespace UnityScreenNavigator.Runtime.Core.Sheet
         /// <returns></returns>
         public static SheetContainer Of(RectTransform rectTransform, bool useCache = true)
         {
+#if UNITY_6000_4_OR_NEWER
+            var hashCode = rectTransform.GetEntityId();
+#else
             var hashCode = rectTransform.GetInstanceID();
+#endif
 
             if (useCache && InstanceCacheByTransform.TryGetValue(hashCode, out var container)) return container;
 
